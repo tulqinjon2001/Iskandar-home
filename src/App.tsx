@@ -70,6 +70,12 @@ function App() {
   const [loginEmail, setLoginEmail] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
   const [loginError, setLoginError] = useState('');
+  const [consultName, setConsultName] = useState('');
+  const [consultPhone, setConsultPhone] = useState('');
+  const [consultMessage, setConsultMessage] = useState('');
+  const [consultSending, setConsultSending] = useState(false);
+  const [consultError, setConsultError] = useState('');
+  const [consultSuccess, setConsultSuccess] = useState('');
   const [uploadError, setUploadError] = useState('');
   const [uploadSuccess, setUploadSuccess] = useState('');
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
@@ -378,6 +384,47 @@ function App() {
   const handleSignOut = async () => {
     if (!supabase) return;
     await supabase.auth.signOut();
+  };
+
+  const handleConsultationSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+
+    if (!consultName.trim() || !consultPhone.trim()) {
+      setConsultError("Ism va telefon raqamini to'ldiring.");
+      return;
+    }
+
+    setConsultSending(true);
+    setConsultError('');
+    setConsultSuccess('');
+
+    try {
+      const response = await fetch('/api/send-telegram', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: consultName.trim(),
+          phone: consultPhone.trim(),
+          message: consultMessage.trim(),
+          page: window.location.pathname,
+        }),
+      });
+
+      const payload = (await response.json()) as { error?: string; ok?: boolean };
+      if (!response.ok || !payload.ok) {
+        setConsultError(payload.error ?? "Xabar yuborilmadi. Keyinroq qayta urinib ko'ring.");
+        return;
+      }
+
+      setConsultSuccess('So‘rovingiz yuborildi. Tez orada siz bilan bog‘lanamiz.');
+      setConsultName('');
+      setConsultPhone('');
+      setConsultMessage('');
+    } catch {
+      setConsultError("Serverga ulanishda xatolik. Qayta urinib ko'ring.");
+    } finally {
+      setConsultSending(false);
+    }
   };
 
   const openServicePage = (categoryKey: ServiceCategoryKey) => {
@@ -1345,22 +1392,28 @@ function App() {
                 Xabar yuborish
               </h3>
 
-              <form className="space-y-5" onSubmit={(e) => e.preventDefault()}>
+              <form className="space-y-5" onSubmit={handleConsultationSubmit}>
                 <div className="grid md:grid-cols-2 gap-5">
                   <div>
                     <label className="text-white/50 text-sm mb-2 block">Ismingiz</label>
                     <input 
                       type="text" 
+                      value={consultName}
+                      onChange={(e) => setConsultName(e.target.value)}
                       className="w-full bg-white/5 border border-white/10 px-4 py-3 text-white placeholder:text-white/30 focus:border-gold focus:outline-none transition-colors"
                       placeholder="Ismingizni kiriting"
+                      required
                     />
                   </div>
                   <div>
                     <label className="text-white/50 text-sm mb-2 block">Telefon</label>
                     <input 
                       type="tel" 
+                      value={consultPhone}
+                      onChange={(e) => setConsultPhone(e.target.value)}
                       className="w-full bg-white/5 border border-white/10 px-4 py-3 text-white placeholder:text-white/30 focus:border-gold focus:outline-none transition-colors"
                       placeholder="+998 __ ___ __ __"
+                      required
                     />
                   </div>
                 </div>
@@ -1368,12 +1421,23 @@ function App() {
                   <label className="text-white/50 text-sm mb-2 block">Xabar</label>
                   <textarea 
                     rows={4}
+                    value={consultMessage}
+                    onChange={(e) => setConsultMessage(e.target.value)}
                     className="w-full bg-white/5 border border-white/10 px-4 py-3 text-white placeholder:text-white/30 focus:border-gold focus:outline-none transition-colors resize-none"
                     placeholder="Loyihangiz haqida qisqacha..."
                   />
                 </div>
-                <button type="submit" className="btn-gold w-full">
-                  Bepul konsultatsiya olish
+                {consultError && <p className="text-red-300 text-sm">{consultError}</p>}
+                {consultSuccess && <p className="text-green-300 text-sm">{consultSuccess}</p>}
+                <button type="submit" disabled={consultSending} className="btn-gold w-full disabled:opacity-60">
+                  {consultSending ? (
+                    <span className="inline-flex items-center gap-2">
+                      <Loader2 size={16} className="animate-spin" />
+                      Yuborilmoqda
+                    </span>
+                  ) : (
+                    "Bepul konsultatsiya olish"
+                  )}
                 </button>
               </form>
 
