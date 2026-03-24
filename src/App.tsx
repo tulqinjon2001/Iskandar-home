@@ -406,7 +406,6 @@ function App() {
           name: consultName.trim(),
           phone: consultPhone.trim(),
           message: consultMessage.trim(),
-          page: window.location.pathname,
         }),
       });
 
