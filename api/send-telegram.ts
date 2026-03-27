@@ -4,6 +4,8 @@ type TelegramRequestBody = {
   name?: string;
   phone?: string;
   message?: string;
+  product?: string;
+  price?: string;
 };
 
 export default async function handler(req: any, res: any) {
@@ -13,6 +15,12 @@ export default async function handler(req: any, res: any) {
   }
 
   const body = (req.body ?? {}) as TelegramRequestBody;
-  const result = await handleTelegramConsultation(body);
+  const result = await handleTelegramConsultation({
+    name: body.name,
+    phone: body.phone,
+    message: body.message,
+    product: body.product,
+    price: body.price,
+  });
   res.status(result.status).json(result.payload);
 }

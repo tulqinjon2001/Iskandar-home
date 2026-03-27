@@ -56,6 +56,8 @@ function sendTelegramDevApi() {
               name: parsed.name as string | undefined,
               phone: parsed.phone as string | undefined,
               message: parsed.message as string | undefined,
+              product: parsed.product as string | undefined,
+              price: parsed.price as string | undefined,
             })
             res.statusCode = result.status
             res.setHeader('Content-Type', 'application/json')

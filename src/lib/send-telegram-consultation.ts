@@ -4,6 +4,8 @@ export type TelegramConsultationBody = {
   name?: string;
   phone?: string;
   message?: string;
+  product?: string;
+  price?: string;
 };
 
 export type TelegramConsultationResult =
@@ -26,6 +28,8 @@ export async function handleTelegramConsultation(
   const name = (body.name ?? '').trim();
   const phone = (body.phone ?? '').trim();
   const message = (body.message ?? '').trim();
+  const product = (body.product ?? '').trim();
+  const price = (body.price ?? '').trim();
 
   if (!name || !phone) {
     return {
@@ -34,14 +38,18 @@ export async function handleTelegramConsultation(
     };
   }
 
-  const text = [
-    'Yangi konsultatsiya so\'rovi',
+  const lines = [
+    product ? '🛒 Yangi buyurtma (zayavka)' : 'Yangi konsultatsiya so\'rovi',
     '',
+    ...(product ? [`Mahsulot: ${product}`] : []),
+    ...(price ? [`Narx: ${price}`] : []),
+    ...(product ? [''] : []),
     `Ism: ${name}`,
     `Telefon: ${phone}`,
-    `Xabar: ${message || '-'}`,
+    ...(message ? [`Izoh: ${message}`] : []),
     `Vaqt: ${new Date().toLocaleString('uz-UZ')}`,
-  ].join('\n');
+  ];
+  const text = lines.join('\n');
 
   const tgResponse = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
     method: 'POST',
