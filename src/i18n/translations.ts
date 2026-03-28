@@ -40,14 +40,6 @@ export type Translations = {
   services: {
     sectionTitle: string;
     sectionBody: string;
-    categories: {
-      doors:     { title: string; desc: string };
-      windows:   { title: string; desc: string };
-      stairs:    { title: string; desc: string };
-      furniture: { title: string; desc: string };
-      flooring:  { title: string; desc: string };
-      metal:     { title: string; desc: string };
-    };
   };
   workshop: {
     title: string;
@@ -130,6 +122,77 @@ export type Translations = {
     currency: string;
     noPriceLabel: string;
   };
+  admin: {
+    login: {
+      subtitle: string;
+      emailLabel: string;
+      passwordLabel: string;
+      showPass: string;
+      hidePass: string;
+      submit: string;
+      submitting: string;
+      supabaseError: string;
+    };
+    dashboard: {
+      panelTitle: string;
+      categoriesLabel: string;
+      productCountSuffix: string;
+      addBtn: string;
+      signOut: string;
+      loading: string;
+      supabaseWarning: string;
+      emptyTitle: string;
+      emptySub: string;
+      addNewLabel: string;
+      addNewSub: string;
+      backBtn: string;
+    };
+    form: {
+      nameLabel: string;
+      nameUzLabel: string;
+      nameRuLabel: string;
+      nameUzPlaceholder: string;
+      nameRuPlaceholder: string;
+      namePlaceholder: string;
+      priceLabel: string;
+      categoryLabel: string;
+      imageLabel: string;
+      dropLabel: string;
+      dropSub: string;
+      replaceLabel: string;
+      removeImage: string;
+      changeImage: string;
+      createTitle: string;
+      editTitle: string;
+      editSubtitle: string;
+      notFound: string;
+      saveBtn: string;
+      saving: string;
+      cancelBtn: string;
+      deleteBtn: string;
+      deleting: string;
+      closeBtn: string;
+    };
+    errors: {
+      categoryRequired: string;
+      supabaseNotConfigured: string;
+      imageRequired: string;
+      nameRequired: string;
+      priceRequired: string;
+      newImageRequired: string;
+    };
+    success: {
+      added: string;
+      updated: string;
+      deleted: string;
+    };
+    deleteConfirm: {
+      title: string;
+      body: string;
+      confirm: string;
+      cancel: string;
+    };
+  };
 };
 
 const uz: Translations = {
@@ -175,15 +238,7 @@ const uz: Translations = {
   },
   services: {
     sectionTitle: 'Bizning xizmatlar',
-    sectionBody: 'Eshiklar, zinapoyalar, mebel va metal ishlar — barchasi bir tom ostida.',
-    categories: {
-      doors:     { title: 'Eshiklar',     desc: "Yog'och va MDF eshiklar, individual dizayn." },
-      windows:   { title: 'Derazalar',    desc: "AKFA tizimlari, issiqroq va tinchroq uy." },
-      stairs:    { title: 'Zinapoyalar',  desc: "Shpon va yog'ochdan zinapoya va boshqalar." },
-      furniture: { title: 'Mebel',        desc: "Korpusli va bo'yalgan mebellar." },
-      flooring:  { title: 'Pol / Tarkon', desc: "Sifatli pol qoplamalari va tarket." },
-      metal:     { title: 'Metal ishlar', desc: "Temir panjaralar va maxsus konstruksiyalar." },
-    },
+    sectionBody: 'Oshxona, yotoq xonasi, mebellar, eshiklar, zinapoyalar va boshqalar — barchasi bir tom ostida.',
   },
   workshop: {
     title: 'Ish jarayoni',
@@ -266,6 +321,77 @@ const uz: Translations = {
     currency: "so'm",
     noPriceLabel: "Narx ko'rsatilmagan",
   },
+  admin: {
+    login: {
+      subtitle: "Tizimga kirish uchun ma'lumotlaringizni kiriting",
+      emailLabel: 'Email',
+      passwordLabel: 'Parol',
+      showPass: "Parolni ko'rsatish",
+      hidePass: 'Parolni yashirish',
+      submit: 'Kirish',
+      submitting: 'Kirilmoqda...',
+      supabaseError: "Supabase sozlanmagan. `.env` faylga VITE_SUPABASE_URL va VITE_SUPABASE_ANON_KEY qo'shing.",
+    },
+    dashboard: {
+      panelTitle: 'Admin Panel',
+      categoriesLabel: 'Kategoriyalar',
+      productCountSuffix: 'ta mahsulot',
+      addBtn: "Qo'shish",
+      signOut: 'Chiqish',
+      loading: 'Yuklanmoqda...',
+      supabaseWarning: "Supabase sozlanmagan — .env faylni tekshiring.",
+      emptyTitle: 'Hali mahsulot yo\'q',
+      emptySub: 'Birinchi mahsulotni qo\'shing',
+      addNewLabel: "Yangi qo'shish",
+      addNewSub: 'Mahsulot yuklash',
+      backBtn: 'Orqaga',
+    },
+    form: {
+      nameLabel: 'Mahsulot nomi',
+      nameUzLabel: "O'zbekcha nomi",
+      nameRuLabel: 'Ruscha nomi',
+      nameUzPlaceholder: "Masalan: Klassik eman eshik",
+      nameRuPlaceholder: "Masalan: Klassicheskaya dubovaya dver",
+      namePlaceholder: 'Masalan: Klassik eman eshik',
+      priceLabel: 'Narxi (UZS)',
+      categoryLabel: 'Kategoriya',
+      imageLabel: 'Rasm',
+      dropLabel: 'Rasmlarni tanlang',
+      dropSub: 'PNG, JPG — max 10MB',
+      replaceLabel: 'Rasmlarni almashtirish',
+      removeImage: 'Rasmni olib tashlash',
+      changeImage: 'Almashtirish',
+      createTitle: "Yangi mahsulot qo'shish",
+      editTitle: 'Mahsulotni tahrirlash',
+      editSubtitle: "Ma'lumotlarni o'zgartirib saqlang",
+      notFound: 'Rasm topilmadi yoki yuklanmoqda...',
+      saveBtn: 'Saqlash',
+      saving: 'Saqlanmoqda...',
+      cancelBtn: 'Bekor qilish',
+      deleteBtn: "O'chirish",
+      deleting: "O'chirilmoqda...",
+      closeBtn: 'Yopish',
+    },
+    errors: {
+      categoryRequired: "Kategoriyani tanlang.",
+      supabaseNotConfigured: "Supabase sozlanmagan.",
+      imageRequired: "Kamida bitta rasm tanlang.",
+      nameRequired: "Mahsulot nomini kiriting.",
+      priceRequired: "Narxni to'g'ri kiriting.",
+      newImageRequired: 'Yangi rasm tanlang.',
+    },
+    success: {
+      added: "ta rasm qo'shildi.",
+      updated: 'Saqlandi.',
+      deleted: "O'chirildi.",
+    },
+    deleteConfirm: {
+      title: "Rasmni o'chirish",
+      body: "Bu amalni ortga qaytarib bo'lmaydi.",
+      confirm: "O'chirish",
+      cancel: 'Bekor',
+    },
+  },
 };
 
 const ru: Translations = {
@@ -311,15 +437,7 @@ const ru: Translations = {
   },
   services: {
     sectionTitle: 'Наши услуги',
-    sectionBody: 'Двери, лестницы, мебель и металлические изделия — всё под одной крышей.',
-    categories: {
-      doors:     { title: 'Двери',              desc: 'Деревянные и МДФ двери, индивидуальный дизайн.' },
-      windows:   { title: 'Окна',               desc: 'Системы AKFA, теплее и тише дом.' },
-      stairs:    { title: 'Лестницы',           desc: 'Лестницы и другое из шпона и дерева.' },
-      furniture: { title: 'Мебель',             desc: 'Корпусная и крашеная мебель.' },
-      flooring:  { title: 'Пол / Ламинат',      desc: 'Качественные напольные покрытия и паркет.' },
-      metal:     { title: 'Металлические работы', desc: 'Железные решётки и специальные конструкции.' },
-    },
+    sectionBody: 'Кухни, спальни, мебель, двери, лестницы и многое другое — всё под одной крышей.',
   },
   workshop: {
     title: 'Процесс работы',
@@ -401,6 +519,77 @@ const ru: Translations = {
   formatters: {
     currency: "сум",
     noPriceLabel: 'Цена не указана',
+  },
+  admin: {
+    login: {
+      subtitle: 'Введите данные для входа в систему',
+      emailLabel: 'Email',
+      passwordLabel: 'Пароль',
+      showPass: 'Показать пароль',
+      hidePass: 'Скрыть пароль',
+      submit: 'Войти',
+      submitting: 'Вход...',
+      supabaseError: 'Supabase не настроен. Добавьте VITE_SUPABASE_URL и VITE_SUPABASE_ANON_KEY в файл `.env`.',
+    },
+    dashboard: {
+      panelTitle: 'Admin Panel',
+      categoriesLabel: 'Категории',
+      productCountSuffix: 'товаров',
+      addBtn: 'Добавить',
+      signOut: 'Выйти',
+      loading: 'Загрузка...',
+      supabaseWarning: 'Supabase не настроен — проверьте .env файл.',
+      emptyTitle: 'Товаров ещё нет',
+      emptySub: 'Добавьте первый товар',
+      addNewLabel: 'Добавить новый',
+      addNewSub: 'Загрузить товар',
+      backBtn: 'Назад',
+    },
+    form: {
+      nameLabel: 'Название товара',
+      nameUzLabel: 'Название (узбекский)',
+      nameRuLabel: 'Название (русский)',
+      nameUzPlaceholder: 'Например: Klassik eman eshik',
+      nameRuPlaceholder: 'Например: Классическая дубовая дверь',
+      namePlaceholder: 'Например: Классическая дубовая дверь',
+      priceLabel: 'Цена (UZS)',
+      categoryLabel: 'Категория',
+      imageLabel: 'Изображение',
+      dropLabel: 'Выберите изображения',
+      dropSub: 'PNG, JPG — макс. 10MB',
+      replaceLabel: 'Заменить изображения',
+      removeImage: 'Удалить изображение',
+      changeImage: 'Заменить',
+      createTitle: 'Добавить новый товар',
+      editTitle: 'Редактирование товара',
+      editSubtitle: 'Измените данные и сохраните',
+      notFound: 'Изображение не найдено или загружается...',
+      saveBtn: 'Сохранить',
+      saving: 'Сохранение...',
+      cancelBtn: 'Отмена',
+      deleteBtn: 'Удалить',
+      deleting: 'Удаление...',
+      closeBtn: 'Закрыть',
+    },
+    errors: {
+      categoryRequired: 'Выберите категорию.',
+      supabaseNotConfigured: 'Supabase не настроен.',
+      imageRequired: 'Выберите хотя бы одно изображение.',
+      nameRequired: 'Введите название товара.',
+      priceRequired: 'Введите корректную цену.',
+      newImageRequired: 'Выберите новое изображение.',
+    },
+    success: {
+      added: 'товар(а) добавлено.',
+      updated: 'Сохранено.',
+      deleted: 'Удалено.',
+    },
+    deleteConfirm: {
+      title: 'Удалить изображение',
+      body: 'Это действие необратимо.',
+      confirm: 'Удалить',
+      cancel: 'Отмена',
+    },
   },
 };
 

@@ -12,6 +12,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { useLanguage } from "../../contexts/LanguageContext";
+import { formatPhoneInput } from "../../utils/formatters";
 
 export function ContactSection() {
   const { t } = useLanguage();
@@ -204,10 +205,12 @@ export function ContactSection() {
                   </label>
                   <input
                     type="tel"
+                    inputMode="numeric"
                     value={consultPhone}
-                    onChange={(e) => setConsultPhone(e.target.value)}
+                    onChange={(e) => setConsultPhone(formatPhoneInput(e.target.value))}
                     className="w-full bg-white/5 border border-white/10 px-4 py-3 text-white placeholder:text-white/30 focus:border-gold focus:outline-none transition-colors"
-                    placeholder={t.contact.form.phonePlaceholder}
+                    placeholder="+998 XX XXX XX XX"
+                    maxLength={17}
                     required
                   />
                 </div>

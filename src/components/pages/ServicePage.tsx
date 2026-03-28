@@ -2,11 +2,12 @@ import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { X, Loader2, Phone, Send } from 'lucide-react';
 import { usePortfolioImages } from '../../hooks/usePortfolioImages';
+import { useCategories } from '../../hooks/useCategories';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { LangSwitcher } from '../ui/LangSwitcher';
-import type { PortfolioImage, ServiceCategoryKey } from '../../types';
-
-const VALID_KEYS: ServiceCategoryKey[] = ['doors', 'windows', 'stairs', 'furniture', 'flooring', 'metal'];
+import { formatPhoneInput, parseProductName } from '../../utils/formatters';
+import { getCategoryName, getCategoryDesc } from '../../constants/services';
+import type { PortfolioImage } from '../../types';
 
 type OrderModalProps = {
   item: PortfolioImage;
@@ -15,7 +16,7 @@ type OrderModalProps = {
 };
 
 function OrderModal({ item, formatPrice, onClose }: OrderModalProps) {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [message, setMessage] = useState('');
@@ -23,7 +24,7 @@ function OrderModal({ item, formatPrice, onClose }: OrderModalProps) {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
-  const productName = item.product_name ?? item.title ?? t.servicePage.noName;
+  const productName = parseProductName(item.product_name ?? item.title, lang) || t.servicePage.noName;
   const priceStr = formatPrice(item.price);
 
   const handleSubmit = async (e: FormEvent) => {
@@ -134,9 +135,11 @@ function OrderModal({ item, formatPrice, onClose }: OrderModalProps) {
                     <Phone size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30 pointer-events-none" />
                     <input
                       type="tel"
+                      inputMode="numeric"
                       value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
-                      placeholder={t.orderModal.phonePlaceholder}
+                      onChange={(e) => setPhone(formatPhoneInput(e.target.value))}
+                      placeholder="+998 XX XXX XX XX"
+                      maxLength={17}
                       required
                       className="w-full bg-white/5 border border-white/10 pl-9 pr-4 py-3 text-white placeholder:text-white/30 focus:border-gold focus:outline-none transition-colors"
                     />
@@ -184,20 +187,19 @@ type ServicePageProps = {
 };
 
 export function ServicePage({ serviceSlug }: ServicePageProps) {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const { loadingPortfolio, getImagesByCategory } = usePortfolioImages();
+  const { getCategoryBySlug, loadingCategories } = useCategories();
   const [selectedItem, setSelectedItem] = useState<PortfolioImage | null>(null);
 
-  const isValid = serviceSlug && VALID_KEYS.includes(serviceSlug as ServiceCategoryKey);
-  const key = isValid ? (serviceSlug as ServiceCategoryKey) : null;
-  const cat = key ? t.services.categories[key] : null;
+  const cat = serviceSlug ? getCategoryBySlug(serviceSlug) : undefined;
 
   const formatPrice = (price: number | null) => {
     if (price === null) return t.servicePage.noPriceLabel;
     return `${price.toLocaleString('ru-RU')} ${t.formatters.currency}`;
   };
 
-  if (!key || !cat) {
+  if (!loadingCategories && (!serviceSlug || !cat)) {
     return (
       <div className="min-h-screen bg-navy text-white px-6 py-12">
         <div className="mx-auto max-w-4xl">
@@ -208,7 +210,15 @@ export function ServicePage({ serviceSlug }: ServicePageProps) {
     );
   }
 
-  const categoryImages = getImagesByCategory(key);
+  if (loadingCategories || !cat) {
+    return (
+      <div className="min-h-screen bg-navy flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-gold/30 border-t-gold rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  const categoryImages = getImagesByCategory(cat.slug);
 
   return (
     <div className="min-h-screen bg-navy text-white">
@@ -233,8 +243,8 @@ export function ServicePage({ serviceSlug }: ServicePageProps) {
 
         {/* Page title */}
         <div className="max-w-3xl mb-8">
-          <h1 className="font-display text-[clamp(34px,4vw,52px)] mb-3">{cat.title}</h1>
-          <p className="text-white/70">{cat.desc}</p>
+          <h1 className="font-display text-[clamp(34px,4vw,52px)] mb-3">{getCategoryName(cat, lang)}</h1>
+          <p className="text-white/70">{getCategoryDesc(cat, lang)}</p>
         </div>
 
         {/* Grid */}
@@ -245,7 +255,7 @@ export function ServicePage({ serviceSlug }: ServicePageProps) {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
             {categoryImages.map((item) => {
-              const name = item.product_name ?? item.title ?? t.servicePage.noName;
+              const name = parseProductName(item.product_name ?? item.title, lang) || t.servicePage.noName;
               return (
                 <div
                   key={item.id}

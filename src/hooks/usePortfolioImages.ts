@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
-import { SERVICE_KEYS } from '../constants/services';
-import type { PortfolioImage, ServiceCategoryKey } from '../types';
+import type { PortfolioImage } from '../types';
 
 export function usePortfolioImages() {
   const [portfolioImages, setPortfolioImages] = useState<PortfolioImage[]>([]);
@@ -25,23 +24,15 @@ export function usePortfolioImages() {
         .select('id,title,image_url,created_at')
         .order('created_at', { ascending: false });
 
-      const mappedFallback = ((fallbackData as Omit<PortfolioImage, 'category'>[] | null) ?? []).map((item) => ({
-        ...item,
-        product_name: item.title,
-        price: null,
-        category: null,
-      }));
-
-      setPortfolioImages(mappedFallback);
+      const mapped = ((fallbackData as Omit<PortfolioImage, 'category'>[] | null) ?? []).map(
+        (item) => ({ ...item, product_name: item.title, price: null, category: null }),
+      );
+      setPortfolioImages(mapped);
       setLoadingPortfolio(false);
       return;
     }
 
-    const normalizedData = ((data as PortfolioImage[] | null) ?? []).map((item) => ({
-      ...item,
-      category: item.category && SERVICE_KEYS.has(item.category) ? item.category : null,
-    }));
-    setPortfolioImages(normalizedData);
+    setPortfolioImages((data as PortfolioImage[] | null) ?? []);
     setLoadingPortfolio(false);
   };
 
@@ -49,8 +40,8 @@ export function usePortfolioImages() {
     void fetchPortfolioImages();
   }, []);
 
-  const getImagesByCategory = (categoryKey: ServiceCategoryKey) =>
-    portfolioImages.filter((item) => item.category === categoryKey);
+  const getImagesByCategory = (slug: string) =>
+    portfolioImages.filter((item) => item.category === slug);
 
   return { portfolioImages, loadingPortfolio, fetchPortfolioImages, getImagesByCategory };
 }
