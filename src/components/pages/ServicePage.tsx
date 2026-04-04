@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
-import { X, Loader2, Phone, Send } from 'lucide-react';
+import { Maximize2, X, Loader2, Phone, Send } from 'lucide-react';
 import { usePortfolioImages } from '../../hooks/usePortfolioImages';
 import { useCategories } from '../../hooks/useCategories';
 import { useLanguage } from '../../contexts/LanguageContext';
@@ -23,6 +23,7 @@ function OrderModal({ item, formatPrice, onClose }: OrderModalProps) {
   const [sending, setSending] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [imageLightboxOpen, setImageLightboxOpen] = useState(false);
 
   const productName = parseProductName(item.product_name ?? item.title, lang) || t.servicePage.noName;
   const priceStr = formatPrice(item.price);
@@ -64,6 +65,15 @@ function OrderModal({ item, formatPrice, onClose }: OrderModalProps) {
     }
   };
 
+  useEffect(() => {
+    if (!imageLightboxOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setImageLightboxOpen(false);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [imageLightboxOpen]);
+
   return (
     <div className="fixed inset-0 z-[90] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={onClose} />
@@ -80,17 +90,26 @@ function OrderModal({ item, formatPrice, onClose }: OrderModalProps) {
         </button>
 
         <div className="grid grid-cols-1 md:grid-cols-[1fr,1.1fr]">
-          {/* Left — product image */}
-          <div className="relative bg-navy flex items-center justify-center min-h-[260px] md:min-h-[460px]">
-            <img
-              src={item.image_url}
-              alt={productName}
-              className="w-full h-full object-contain max-h-[320px] md:max-h-[460px] p-4"
-            />
-            {/* product info overlay at bottom */}
-            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-navy/95 to-transparent px-5 py-4">
-              <p className="text-white font-semibold text-base leading-snug">{productName}</p>
-              <p className="text-gold text-sm mt-0.5">{priceStr}</p>
+          {/* Left — product image (tap to enlarge) */}
+          <div className="relative flex min-h-[260px] items-center justify-center bg-navy md:min-h-[460px]">
+            <button
+              type="button"
+              onClick={() => setImageLightboxOpen(true)}
+              className="group relative flex h-full min-h-[260px] w-full cursor-zoom-in flex-col items-center justify-center md:min-h-[460px]"
+              aria-label={t.orderModal.enlargeImage}
+            >
+              <img
+                src={item.image_url}
+                alt=""
+                className="max-h-[320px] w-full object-contain p-4 transition-transform duration-300 group-hover:scale-[1.02] md:max-h-[460px]"
+              />
+              <span className="pointer-events-none absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-md border border-white/20 bg-navy/85 text-white/80 shadow-md backdrop-blur-sm transition-colors group-hover:border-gold/40 group-hover:text-gold">
+                <Maximize2 size={16} aria-hidden />
+              </span>
+            </button>
+            <div className="pointer-events-none absolute bottom-0 left-0 right-0 bg-gradient-to-t from-navy/95 to-transparent px-5 py-4">
+              <p className="text-base font-semibold leading-snug text-white">{productName}</p>
+              <p className="mt-0.5 text-sm text-gold">{priceStr}</p>
             </div>
           </div>
 
@@ -178,6 +197,38 @@ function OrderModal({ item, formatPrice, onClose }: OrderModalProps) {
           </div>
         </div>
       </div>
+
+      {imageLightboxOpen && (
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/75 p-4 backdrop-blur-md"
+          role="dialog"
+          aria-modal="true"
+          aria-label={t.orderModal.enlargeImage}
+          onClick={() => setImageLightboxOpen(false)}
+        >
+          <div
+            className="relative max-h-[90vh] max-w-[min(100%,1200px)]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <img
+              src={item.image_url}
+              alt={productName}
+              className="max-h-[90vh] w-full object-contain"
+            />
+          </div>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              setImageLightboxOpen(false);
+            }}
+            className="absolute right-4 top-4 z-10 flex h-10 w-10 items-center justify-center border border-white/25 bg-navy/90 text-white/80 transition-colors hover:border-gold/50 hover:bg-white/10 hover:text-white"
+            aria-label={t.orderModal.close}
+          >
+            <X size={18} />
+          </button>
+        </div>
+      )}
     </div>
   );
 }
@@ -253,39 +304,45 @@ export function ServicePage({ serviceSlug }: ServicePageProps) {
         ) : categoryImages.length === 0 ? (
           <div className="glass-card p-6 text-white/70">{t.servicePage.empty}</div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 items-stretch">
             {categoryImages.map((item) => {
               const name = parseProductName(item.product_name ?? item.title, lang) || t.servicePage.noName;
               return (
                 <div
                   key={item.id}
-                  className="glass-card overflow-hidden border border-transparent hover:border-gold/30 transition-colors flex flex-col"
+                  className="group glass-card flex h-full flex-col overflow-hidden rounded-xl border border-white/[0.08] transition-all duration-300 hover:-translate-y-1 hover:border-gold/40 hover:shadow-2xl hover:shadow-black/45"
                 >
-                  {/* Image */}
                   <button
                     type="button"
                     onClick={() => setSelectedItem(item)}
-                    className="flex-1 text-left focus:outline-none"
+                    className="flex min-h-0 flex-1 flex-col text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-gold/45 focus-visible:ring-offset-2 focus-visible:ring-offset-[#071a2e]"
                     aria-label={name}
                   >
-                    <img
-                      src={item.image_url}
-                      alt={name}
-                      className="w-full h-64 object-contain bg-navy"
-                      loading="lazy"
-                    />
-                    <div className="px-4 pt-3">
-                      <p className="text-white font-medium text-sm leading-snug">{name}</p>
-                      <p className="text-gold text-sm mt-0.5">{formatPrice(item.price)}</p>
+                    <div className="relative aspect-[4/3] w-full shrink-0 overflow-hidden border-b border-white/[0.06] bg-[#050f18]">
+                      <div
+                        className="pointer-events-none absolute inset-0 bg-gradient-to-b from-white/[0.04] to-transparent opacity-80"
+                        aria-hidden
+                      />
+                      <img
+                        src={item.image_url}
+                        alt=""
+                        className="absolute inset-0 h-full w-full object-contain p-4 transition-transform duration-500 ease-out group-hover:scale-[1.03]"
+                        loading="lazy"
+                      />
+                    </div>
+                    <div className="flex flex-1 flex-col px-4 pb-3 pt-4">
+                      <p className="line-clamp-3 text-sm font-medium leading-relaxed text-white/95">{name}</p>
+                      <p className="mt-auto pt-3 text-sm font-semibold tabular-nums tracking-tight text-gold">
+                        {formatPrice(item.price)}
+                      </p>
                     </div>
                   </button>
 
-                  {/* Order button */}
-                  <div className="px-4 pb-4 pt-3">
+                  <div className="shrink-0 px-4 pb-4 pt-1">
                     <button
                       type="button"
                       onClick={() => setSelectedItem(item)}
-                      className="w-full btn-gold text-sm py-2.5"
+                      className="btn-gold w-full rounded-sm py-2.5 text-sm font-semibold transition-transform active:translate-y-0"
                     >
                       {t.servicePage.orderBtn}
                     </button>

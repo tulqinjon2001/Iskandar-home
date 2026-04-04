@@ -117,6 +117,7 @@ export type Translations = {
     errorServer: string;
     success: string;
     close: string;
+    enlargeImage: string;
   };
   formatters: {
     currency: string;
@@ -316,6 +317,7 @@ const uz: Translations = {
     errorServer: "Serverga ulanishda xatolik. Qayta urinib ko'ring.",
     success: "Zayavkangiz qabul qilindi! Tez orada siz bilan bog'lanamiz.",
     close: 'Yopish',
+    enlargeImage: "Rasmni katta ko'rish",
   },
   formatters: {
     currency: "so'm",
@@ -515,6 +517,7 @@ const ru: Translations = {
     errorServer: 'Ошибка подключения к серверу. Попробуйте ещё раз.',
     success: 'Ваша заявка принята! Мы свяжемся с вами в ближайшее время.',
     close: 'Закрыть',
+    enlargeImage: 'Увеличить изображение',
   },
   formatters: {
     currency: "сум",
