@@ -3,6 +3,7 @@ export type Lang = 'uz' | 'ru';
 export type Translations = {
   nav: {
     services: string;
+    works: string;
     about: string;
     process: string;
     contact: string;
@@ -40,6 +41,10 @@ export type Translations = {
   services: {
     sectionTitle: string;
     sectionBody: string;
+    catalogTab: string;
+    materialsTab: string;
+    materialsEmpty: string;
+    materialsLoading: string;
   };
   workshop: {
     title: string;
@@ -137,6 +142,7 @@ export type Translations = {
     dashboard: {
       panelTitle: string;
       categoriesLabel: string;
+      materialsSection: string;
       productCountSuffix: string;
       addBtn: string;
       signOut: string;
@@ -149,6 +155,11 @@ export type Translations = {
       backBtn: string;
     };
     form: {
+      kindLabel: string;
+      kindCatalog: string;
+      kindMaterial: string;
+      createCatalogTitle: string;
+      createMaterialTitle: string;
       nameLabel: string;
       nameUzLabel: string;
       nameRuLabel: string;
@@ -181,6 +192,7 @@ export type Translations = {
       nameRequired: string;
       priceRequired: string;
       newImageRequired: string;
+      isMaterialColumnMissing: string;
     };
     success: {
       added: string;
@@ -199,6 +211,7 @@ export type Translations = {
 const uz: Translations = {
   nav: {
     services: 'Xizmatlar',
+    works: 'Bizning ishlarimiz',
     about: 'Biz haqimizda',
     process: 'Ish jarayoni',
     contact: 'Aloqa',
@@ -225,7 +238,7 @@ const uz: Translations = {
     },
   },
   hero: {
-    title: 'Sifatli mebel va duradgorlik',
+    title: "Sifatli mebel va yog'och ishlar",
     subtitle: 'Maxsus buyurtma asosida eshiklar, zinapoyalar va sifatli mebellar ishlab chiqaramiz.',
     cta: 'Bepul konsultatsiya olish',
     learnMore: 'Xizmatlar bilan tanishish',
@@ -240,6 +253,10 @@ const uz: Translations = {
   services: {
     sectionTitle: 'Bizning xizmatlar',
     sectionBody: 'Oshxona, yotoq xonasi, mebellar, eshiklar, zinapoyalar va boshqalar — barchasi bir tom ostida.',
+    catalogTab: 'Katalog',
+    materialsTab: 'Materiallar',
+    materialsEmpty: "Hozircha materiallar rasmlari qo'shilmagan.",
+    materialsLoading: 'Materiallar yuklanmoqda...',
   },
   workshop: {
     title: 'Ish jarayoni',
@@ -337,6 +354,7 @@ const uz: Translations = {
     dashboard: {
       panelTitle: 'Admin Panel',
       categoriesLabel: 'Kategoriyalar',
+      materialsSection: 'Materiallar',
       productCountSuffix: 'ta mahsulot',
       addBtn: "Qo'shish",
       signOut: 'Chiqish',
@@ -349,6 +367,11 @@ const uz: Translations = {
       backBtn: 'Orqaga',
     },
     form: {
+      kindLabel: 'Mahsulot turi',
+      kindCatalog: 'Katalog (xizmat)',
+      kindMaterial: 'Material',
+      createCatalogTitle: 'Katalog mahsuloti qo‘shish',
+      createMaterialTitle: 'Material qo‘shish',
       nameLabel: 'Mahsulot nomi',
       nameUzLabel: "O'zbekcha nomi",
       nameRuLabel: 'Ruscha nomi',
@@ -381,6 +404,8 @@ const uz: Translations = {
       nameRequired: "Mahsulot nomini kiriting.",
       priceRequired: "Narxni to'g'ri kiriting.",
       newImageRequired: 'Yangi rasm tanlang.',
+      isMaterialColumnMissing:
+        "Saqlashda xatolik (ustun yoki boshqa sabab). Agar `is_material` yo'q bo'lsa, kod avtomatik maxfiy kategoriya orqali saqlashga urinadi; baribir xato bo'lsa, SQL: `supabase-add-is-material-column.sql` ni Supabase SQL Editor da ishga tushiring.",
     },
     success: {
       added: "ta rasm qo'shildi.",
@@ -399,6 +424,7 @@ const uz: Translations = {
 const ru: Translations = {
   nav: {
     services: 'Услуги',
+    works: 'Наши работы',
     about: 'О нас',
     process: 'Процесс работы',
     contact: 'Контакты',
@@ -425,7 +451,7 @@ const ru: Translations = {
     },
   },
   hero: {
-    title: 'Качественная мебель и столярные работы',
+    title: 'Качественная мебель и изделия из дерева',
     subtitle: 'Производим двери, лестницы и качественную мебель по индивидуальному заказу.',
     cta: 'Получить консультацию',
     learnMore: 'Ознакомиться с услугами',
@@ -440,6 +466,10 @@ const ru: Translations = {
   services: {
     sectionTitle: 'Наши услуги',
     sectionBody: 'Кухни, спальни, мебель, двери, лестницы и многое другое — всё под одной крышей.',
+    catalogTab: 'Каталог',
+    materialsTab: 'Материалы',
+    materialsEmpty: 'Изображения материалов пока не добавлены.',
+    materialsLoading: 'Загрузка материалов...',
   },
   workshop: {
     title: 'Процесс работы',
@@ -537,6 +567,7 @@ const ru: Translations = {
     dashboard: {
       panelTitle: 'Admin Panel',
       categoriesLabel: 'Категории',
+      materialsSection: 'Материалы',
       productCountSuffix: 'товаров',
       addBtn: 'Добавить',
       signOut: 'Выйти',
@@ -549,6 +580,11 @@ const ru: Translations = {
       backBtn: 'Назад',
     },
     form: {
+      kindLabel: 'Тип позиции',
+      kindCatalog: 'Каталог (услуга)',
+      kindMaterial: 'Материал',
+      createCatalogTitle: 'Добавить товар в каталог',
+      createMaterialTitle: 'Добавить материал',
       nameLabel: 'Название товара',
       nameUzLabel: 'Название (узбекский)',
       nameRuLabel: 'Название (русский)',
@@ -581,6 +617,8 @@ const ru: Translations = {
       nameRequired: 'Введите название товара.',
       priceRequired: 'Введите корректную цену.',
       newImageRequired: 'Выберите новое изображение.',
+      isMaterialColumnMissing:
+        'Ошибка сохранения. Если нет столбца `is_material`, приложение пробует запасной вариант; если не помогло — выполните SQL из `supabase-add-is-material-column.sql` в Supabase SQL Editor.',
     },
     success: {
       added: 'товар(а) добавлено.',

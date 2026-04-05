@@ -17,7 +17,7 @@ export function LangSwitcher({ className = '' }: Props) {
           key={l}
           type="button"
           onClick={() => setLang(l)}
-          className={`px-3 py-1.5 text-xs font-semibold uppercase tracking-wider transition-colors ${
+          className={`px-2 py-1 text-[10px] font-semibold uppercase tracking-wider transition-colors sm:px-2.5 sm:py-1.5 sm:text-xs ${
             lang === l
               ? 'bg-gold text-navy'
               : 'text-white/70 hover:text-white'

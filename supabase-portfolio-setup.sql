@@ -38,6 +38,7 @@ create table if not exists public.portfolio_images (
 alter table public.portfolio_images add column if not exists product_name text;
 alter table public.portfolio_images add column if not exists price        numeric;
 alter table public.portfolio_images add column if not exists category     text;
+alter table public.portfolio_images add column if not exists is_material  boolean not null default false;
 
 -- ────────────────────────────────────────────────────────────
 -- 3. RLS — yoqish

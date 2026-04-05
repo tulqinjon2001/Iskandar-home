@@ -7,12 +7,28 @@ import { ServicesSection } from '../sections/ServicesSection';
 import { WorkshopSection } from '../sections/WorkshopSection';
 import { QualitySection } from '../sections/QualitySection';
 import { ContactSection } from '../sections/ContactSection';
+import { useEffect } from 'react';
 import { useGsapAnimations } from '../../hooks/useGsapAnimations';
+import { restoreLandingScrollIfNeeded } from '../../utils/landingScrollRestore';
 
 export function LandingPage() {
   useGsapAnimations(true);
 
+  useEffect(() => {
+    restoreLandingScrollIfNeeded();
+  }, []);
+
   const scrollToSection = (id: string) => {
+    if (id === 'home' && window.location.hash) {
+      window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}`);
+    }
+    if (id === 'works') {
+      window.location.hash = 'works';
+      requestAnimationFrame(() => {
+        document.getElementById('services')?.scrollIntoView({ behavior: 'smooth' });
+      });
+      return;
+    }
     const element = document.getElementById(id);
     element?.scrollIntoView({ behavior: 'smooth' });
   };

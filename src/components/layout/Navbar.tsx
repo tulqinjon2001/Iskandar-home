@@ -22,15 +22,15 @@ export function Navbar({ scrollToSection }: NavbarProps) {
   };
 
   const navItems = [
+    { id: 'about', label: t.nav.about },
     { id: 'services', label: t.nav.services },
-    { id: 'about',    label: t.nav.about },
-    { id: 'process',  label: t.nav.process },
-    { id: 'contact',  label: t.nav.contact },
+    { id: 'process', label: t.nav.process },
+    { id: 'contact', label: t.nav.contact },
   ];
 
   return (
     <>
-      <nav className="fixed top-0 left-0 right-0 z-50 px-6 lg:px-12 py-6 flex items-center justify-between bg-gradient-to-b from-navy/90 to-transparent">
+      <nav className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between bg-gradient-to-b from-navy/90 to-transparent px-5 py-4 lg:px-10 lg:py-5">
         <button
           onClick={() => handleNav('home')}
           className="flex items-center gap-3"
@@ -39,25 +39,25 @@ export function Navbar({ scrollToSection }: NavbarProps) {
           <img
             src="/logo/logo.jpg"
             alt="Iskandar Home"
-            className="h-10 w-10 rounded-sm object-cover ring-1 ring-gold/50 lg:h-12 lg:w-12"
+            className="h-9 w-9 rounded-sm object-cover ring-1 ring-gold/50 lg:h-10 lg:w-10"
           />
-          <span className="font-display text-base lg:text-xl text-white font-medium tracking-tight">
+          <span className="font-display text-sm font-medium tracking-tight text-white lg:text-base">
             Iskandar Home
           </span>
         </button>
 
         {/* Desktop Nav */}
-        <div className="hidden lg:flex items-center gap-8">
+        <div className="hidden items-center gap-4 lg:flex xl:gap-5">
           {navItems.map(({ id, label }) => (
             <button
               key={id}
               onClick={() => handleNav(id)}
-              className="text-sm text-white/80 hover:text-gold transition-colors uppercase tracking-widest"
+              className="text-[11px] uppercase tracking-wider text-white/80 transition-colors hover:text-gold xl:text-xs"
             >
               {label}
             </button>
           ))}
-          <LangSwitcher className="ml-2" />
+          <LangSwitcher className="ml-1" />
         </div>
 
         {/* Mobile Toggle */}
@@ -80,19 +80,19 @@ export function Navbar({ scrollToSection }: NavbarProps) {
             className="fixed inset-0 z-40 bg-navy/60 backdrop-blur-xl"
             onClick={() => setMobileMenuOpen(false)}
           />
-          <div className="fixed inset-0 z-40 flex flex-col items-center justify-center gap-8 lg:hidden">
+          <div className="fixed inset-0 z-40 flex flex-col items-center justify-center gap-6 lg:hidden">
             {navItems.map(({ id, label }) => (
               <button
                 key={id}
                 onClick={() => handleNav(id)}
-                className="text-3xl text-white font-display hover:text-gold transition-colors py-2"
+                className="font-display py-2 text-xl text-white transition-colors hover:text-gold sm:text-2xl"
               >
                 {label}
               </button>
             ))}
             <button
               onClick={() => handleNav('contact')}
-              className="btn-gold mt-6 text-lg"
+              className="btn-gold mt-4 text-sm"
             >
               {t.nav.cta}
             </button>

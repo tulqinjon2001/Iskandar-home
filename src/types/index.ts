@@ -20,4 +20,6 @@ export type PortfolioImage = {
   image_url: string;
   created_at: string;
   category: string | null;
+  /** true: faqat bosh sahifa «Materiallar»; false: katalog (xizmat sahifasi) */
+  is_material?: boolean;
 };

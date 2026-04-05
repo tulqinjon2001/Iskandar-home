@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import type { FormEvent } from 'react';
 import {
   FileUp, Loader2, LogOut, Pencil, Trash2,
@@ -9,6 +9,8 @@ import {
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { getCategoryName } from '../../constants/services';
+import { LEGACY_MATERIAL_CATEGORY_SLUG } from '../../constants/materialsLegacy';
+import { isPortfolioMaterialRow } from '../../utils/portfolioRow';
 import { useAuth } from '../../hooks/useAuth';
 import { useCategories } from '../../hooks/useCategories';
 import { usePortfolioImages } from '../../hooks/usePortfolioImages';
@@ -39,6 +41,9 @@ const CAT_ICONS: Record<string, ReactNode> = {
 };
 const DEFAULT_ICON = <LayoutGrid size={16} strokeWidth={1.6} />;
 
+/** Sidebar: katalogdan tashqari «Materiallar» bo'limi (DB dagi slug emas) */
+const MATERIALS_SIDEBAR_SLUG = '__materials__';
+
 // ─── Shared input class ──────────────────────────────────────────────────────
 const INPUT_CLS =
   'w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm ' +
@@ -65,10 +70,20 @@ type AdminPageProps = {
 };
 
 export function AdminPage({ isEditPage, editImageId }: AdminPageProps) {
-  const { portfolioImages, fetchPortfolioImages, getImagesByCategory, loadingPortfolio } = usePortfolioImages();
+  const { portfolioImages, fetchPortfolioImages, loadingPortfolio } = usePortfolioImages();
   const { categories, loadingCategories } = useCategories();
   const { user, authLoading, signOut } = useAuth(true);
   const { t, lang } = useLanguage();
+
+  const mapDbError = (msg: string) => {
+    if (/is_material/i.test(msg) && (/schema|column|Could not find/i.test(msg))) {
+      return t.admin.errors.isMaterialColumnMissing;
+    }
+    return msg;
+  };
+
+  const isLegacyMaterialSchemaError = (msg: string) =>
+    /is_material/i.test(msg) && (/schema|column|Could not find/i.test(msg));
 
   const formatPrice = (price: number | null) =>
     price === null
@@ -99,10 +114,23 @@ export function AdminPage({ isEditPage, editImageId }: AdminPageProps) {
   const [isDeletingEdit, setIsDeletingEdit]     = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [createAsMaterial, setCreateAsMaterial] = useState(false);
+  const [editIsMaterial, setEditIsMaterial] = useState(false);
 
   const editingImage    = isEditPage ? portfolioImages.find((i) => i.id === editImageId) ?? null : null;
   const activeCat       = selectedCategory || categories[0]?.slug || '';
-  const catImages       = getImagesByCategory(activeCat);
+  const catImages       = useMemo(() => {
+    if (activeCat === MATERIALS_SIDEBAR_SLUG) {
+      return portfolioImages.filter((i) => isPortfolioMaterialRow(i));
+    }
+    return portfolioImages.filter(
+      (i) => !isPortfolioMaterialRow(i) && i.category === activeCat,
+    );
+  }, [portfolioImages, activeCat]);
+  const materialCount   = useMemo(
+    () => portfolioImages.filter((i) => isPortfolioMaterialRow(i)).length,
+    [portfolioImages],
+  );
   const filteredCats    = categories.filter((c) =>
     getCategoryName(c, lang).toLowerCase().includes(categorySearch.toLowerCase()),
   );
@@ -130,10 +158,17 @@ export function AdminPage({ isEditPage, editImageId }: AdminPageProps) {
     setEditNameUz(decoded.uz);
     setEditNameRu(decoded.ru);
     setEditPrice(img.price ? String(img.price) : '');
-    setEditCategory(img.category ?? categories[0]?.slug ?? '');
+    const mat = isPortfolioMaterialRow(img);
+    setEditIsMaterial(mat);
+    setEditCategory(!mat && img.category ? img.category : categories[0]?.slug ?? '');
     setEditFile(null);
     setIsEditImageRemoved(false);
-  }, [isEditPage, editImageId, portfolioImages]);
+  }, [isEditPage, editImageId, portfolioImages, categories]);
+
+  useEffect(() => {
+    if (!showCreatePanel) return;
+    setCreateAsMaterial(selectedCategory === MATERIALS_SIDEBAR_SLUG);
+  }, [showCreatePanel, selectedCategory]);
 
   useEffect(() => {
     if (!editFile) { setEditFilePreview(''); return; }
@@ -151,27 +186,66 @@ export function AdminPage({ isEditPage, editImageId }: AdminPageProps) {
   const handleUpload = async (e: FormEvent) => {
     e.preventDefault();
     const ae = t.admin.errors;
-    if (!activeCat)   { setUploadError(ae.categoryRequired); return; }
     if (!supabase)    { setUploadError(ae.supabaseNotConfigured); return; }
+    if (!createAsMaterial) {
+      if (!selectedCategory || selectedCategory === MATERIALS_SIDEBAR_SLUG) {
+        setUploadError(ae.categoryRequired);
+        return;
+      }
+    }
     if (selectedFiles.length === 0)           { setUploadError(ae.imageRequired); return; }
     if (!imageTitleUz.trim())                 { setUploadError(ae.nameRequired); return; }
-    const numPrice = Number(imagePrice.replace(/\s+/g, ''));
-    if (!imagePrice.trim() || isNaN(numPrice) || numPrice <= 0) { setUploadError(ae.priceRequired); return; }
+    let createPrice: number | null = null;
+    if (imagePrice.trim()) {
+      const numPrice = Number(imagePrice.replace(/\s+/g, ''));
+      if (isNaN(numPrice) || numPrice <= 0) { setUploadError(ae.priceRequired); return; }
+      createPrice = numPrice;
+    }
     const encodedName = encodeProductName(imageTitleUz, imageTitleRu);
 
     setUploadError(''); setUploadSuccess(''); setIsUploadingCreate(true);
 
-    const rows: { title: string | null; product_name: string; price: number; image_url: string; category: string }[] = [];
+    const rows: {
+      title: string | null;
+      product_name: string;
+      price: number | null;
+      image_url: string;
+      category: string | null;
+      is_material: boolean;
+    }[] = [];
+    const rowCategory = createAsMaterial ? null : selectedCategory;
+    const rowIsMaterial = createAsMaterial;
     for (const file of selectedFiles) {
       const path = makeStoragePath(file);
       const { error: sErr } = await supabase.storage.from('portfolio').upload(path, file);
       if (sErr) { setUploadError(sErr.message); setIsUploadingCreate(false); return; }
       const { data: { publicUrl } } = supabase.storage.from('portfolio').getPublicUrl(path);
-      rows.push({ title: encodedName, product_name: encodedName, price: numPrice, image_url: publicUrl, category: activeCat });
+      rows.push({
+        title: encodedName,
+        product_name: encodedName,
+        price: createPrice,
+        image_url: publicUrl,
+        category: rowCategory,
+        is_material: rowIsMaterial,
+      });
     }
 
-    const { error: iErr } = await supabase.from('portfolio_images').insert(rows);
-    if (iErr) { setUploadError(iErr.message); setIsUploadingCreate(false); return; }
+    let insertErr = (await supabase.from('portfolio_images').insert(rows)).error;
+    if (insertErr && isLegacyMaterialSchemaError(insertErr.message)) {
+      const legacyRows = rows.map((r) => {
+        const base = {
+          title: r.title,
+          product_name: r.product_name,
+          price: r.price,
+          image_url: r.image_url,
+        };
+        return r.is_material
+          ? { ...base, category: LEGACY_MATERIAL_CATEGORY_SLUG }
+          : { ...base, category: r.category };
+      });
+      insertErr = (await supabase.from('portfolio_images').insert(legacyRows)).error;
+    }
+    if (insertErr) { setUploadError(mapDbError(insertErr.message)); setIsUploadingCreate(false); return; }
 
     setSelectedFiles([]); setSelectedFilePreviews([]); setImageTitleUz(''); setImageTitleRu(''); setImagePrice('');
     setShowCreatePanel(false); setUploadSuccess(`${rows.length} ${t.admin.success.added}`);
@@ -182,8 +256,13 @@ export function AdminPage({ isEditPage, editImageId }: AdminPageProps) {
     if (!supabase || !editingImage) return;
     const ae = t.admin.errors;
     if (!editNameUz.trim()) { setUploadError(ae.nameRequired); return; }
-    const numPrice = Number(editPrice.replace(/\s+/g, ''));
-    if (!editPrice.trim() || isNaN(numPrice) || numPrice <= 0) { setUploadError(ae.priceRequired); return; }
+    if (!editIsMaterial && !editCategory.trim()) { setUploadError(ae.categoryRequired); return; }
+    let updatePrice: number | null = null;
+    if (editPrice.trim()) {
+      const numPrice = Number(editPrice.replace(/\s+/g, ''));
+      if (isNaN(numPrice) || numPrice <= 0) { setUploadError(ae.priceRequired); return; }
+      updatePrice = numPrice;
+    }
     if (isEditImageRemoved && !editFile) { setUploadError(ae.newImageRequired); return; }
     const encodedName = encodeProductName(editNameUz, editNameRu);
 
@@ -196,10 +275,34 @@ export function AdminPage({ isEditPage, editImageId }: AdminPageProps) {
       const { data: { publicUrl } } = supabase.storage.from('portfolio').getPublicUrl(path);
       nextUrl = publicUrl;
     }
-    const { error } = await supabase.from('portfolio_images').update({
-      title: encodedName, product_name: encodedName, price: numPrice, category: editCategory, image_url: nextUrl,
-    }).eq('id', editingImage.id);
-    if (error) { setUploadError(error.message); setIsUpdatingEdit(false); return; }
+    let updError = (
+      await supabase
+        .from('portfolio_images')
+        .update({
+          title: encodedName,
+          product_name: encodedName,
+          price: updatePrice,
+          category: editIsMaterial ? null : editCategory,
+          is_material: editIsMaterial,
+          image_url: nextUrl,
+        })
+        .eq('id', editingImage.id)
+    ).error;
+    if (updError && isLegacyMaterialSchemaError(updError.message)) {
+      updError = (
+        await supabase
+          .from('portfolio_images')
+          .update({
+            title: encodedName,
+            product_name: encodedName,
+            price: updatePrice,
+            image_url: nextUrl,
+            category: editIsMaterial ? LEGACY_MATERIAL_CATEGORY_SLUG : editCategory,
+          })
+          .eq('id', editingImage.id)
+      ).error;
+    }
+    if (updError) { setUploadError(mapDbError(updError.message)); setIsUpdatingEdit(false); return; }
     setUploadSuccess(t.admin.success.updated); setIsUpdatingEdit(false); backToAdminPage(); await fetchPortfolioImages();
   };
 
@@ -259,6 +362,36 @@ export function AdminPage({ isEditPage, editImageId }: AdminPageProps) {
                 {/* Left — fields */}
                 <div className="rounded-2xl border border-white/10 bg-[#111827]/80 p-6 space-y-5">
                   <div>
+                    <p className="text-white/60 text-xs font-medium uppercase tracking-wider mb-2">{t.admin.form.kindLabel}</p>
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setEditIsMaterial(false);
+                          if (!editCategory.trim()) setEditCategory(categories[0]?.slug ?? '');
+                        }}
+                        className={`flex-1 rounded-xl border px-3 py-2.5 text-xs font-medium transition-all ${
+                          !editIsMaterial
+                            ? 'border-gold/50 bg-gold/15 text-gold'
+                            : 'border-white/10 bg-white/5 text-white/45 hover:border-white/20 hover:text-white/80'
+                        }`}
+                      >
+                        {t.admin.form.kindCatalog}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setEditIsMaterial(true)}
+                        className={`flex-1 rounded-xl border px-3 py-2.5 text-xs font-medium transition-all ${
+                          editIsMaterial
+                            ? 'border-gold/50 bg-gold/15 text-gold'
+                            : 'border-white/10 bg-white/5 text-white/45 hover:border-white/20 hover:text-white/80'
+                        }`}
+                      >
+                        {t.admin.form.kindMaterial}
+                      </button>
+                    </div>
+                  </div>
+                  <div>
                     <p className="text-white/60 text-xs font-medium uppercase tracking-wider mb-2">
                       {t.admin.form.nameLabel}
                     </p>
@@ -295,27 +428,29 @@ export function AdminPage({ isEditPage, editImageId }: AdminPageProps) {
                       <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gold text-xs font-semibold">UZS</span>
                     </div>
                   </div>
-                  <div>
-                    <label className="text-white/60 text-xs font-medium uppercase tracking-wider block mb-2">
-                      {t.admin.form.categoryLabel}
-                    </label>
-                    <div className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto pr-1"
-                      style={{ scrollbarWidth: 'thin', scrollbarColor: 'rgba(201,169,110,0.2) transparent' }}>
-                      {categories.map((cat) => (
-                        <button key={cat.slug} type="button"
-                          onClick={() => setEditCategory(cat.slug)}
-                          className={`flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm transition-all duration-200 ${
-                            editCategory === cat.slug
-                              ? 'bg-gold/15 border border-gold/50 text-gold'
-                              : 'bg-white/5 border border-white/10 text-white/60 hover:text-white hover:border-white/20'
-                          }`}
-                        >
-                          <span className="shrink-0">{CAT_ICONS[cat.slug] ?? DEFAULT_ICON}</span>
-                          {getCategoryName(cat, lang)}
-                        </button>
-                      ))}
+                  {!editIsMaterial && (
+                    <div>
+                      <label className="text-white/60 text-xs font-medium uppercase tracking-wider block mb-2">
+                        {t.admin.form.categoryLabel}
+                      </label>
+                      <div className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto pr-1"
+                        style={{ scrollbarWidth: 'thin', scrollbarColor: 'rgba(201,169,110,0.2) transparent' }}>
+                        {categories.map((cat) => (
+                          <button key={cat.slug} type="button"
+                            onClick={() => setEditCategory(cat.slug)}
+                            className={`flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm transition-all duration-200 ${
+                              editCategory === cat.slug
+                                ? 'bg-gold/15 border border-gold/50 text-gold'
+                                : 'bg-white/5 border border-white/10 text-white/60 hover:text-white hover:border-white/20'
+                            }`}
+                          >
+                            <span className="shrink-0">{CAT_ICONS[cat.slug] ?? DEFAULT_ICON}</span>
+                            {getCategoryName(cat, lang)}
+                          </button>
+                        ))}
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </div>
 
                 {/* Right — image */}
@@ -496,13 +631,47 @@ export function AdminPage({ isEditPage, editImageId }: AdminPageProps) {
               </div>
             )}
 
-            {!loadingCategories && filteredCats.length === 0 && (
+            {!loadingCategories && filteredCats.length === 0 && categorySearch.trim() !== '' && (
               <p className="text-white/25 text-xs text-center py-6">Topilmadi</p>
+            )}
+
+            {!loadingCategories && (
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedCategory(MATERIALS_SIDEBAR_SLUG);
+                  setMobileSidebarOpen(false);
+                }}
+                className={`
+                  w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm mb-1
+                  transition-all duration-200 group
+                  ${activeCat === MATERIALS_SIDEBAR_SLUG
+                    ? 'bg-gold/12 border border-gold/35 text-gold'
+                    : 'border border-transparent text-white/55 hover:text-white hover:bg-white/[0.06]'
+                  }
+                `}
+              >
+                <span className={`shrink-0 transition-colors ${activeCat === MATERIALS_SIDEBAR_SLUG ? 'text-gold' : 'text-white/25 group-hover:text-white/60'}`}>
+                  <Layers size={16} strokeWidth={1.6} />
+                </span>
+                <span className="flex-1 text-left font-medium text-[13px] leading-snug">
+                  {t.admin.dashboard.materialsSection}
+                </span>
+                {materialCount > 0 && (
+                  <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full min-w-[18px] text-center shrink-0 ${
+                    activeCat === MATERIALS_SIDEBAR_SLUG ? 'bg-gold/25 text-gold' : 'bg-white/8 text-white/35'
+                  }`}>
+                    {materialCount}
+                  </span>
+                )}
+              </button>
             )}
 
             {!loadingCategories && filteredCats.map((cat: Category) => {
               const isActive = activeCat === cat.slug;
-              const count = getImagesByCategory(cat.slug).length;
+              const count = portfolioImages.filter(
+                (i) => !isPortfolioMaterialRow(i) && i.category === cat.slug,
+              ).length;
               return (
                 <button
                   key={cat.slug}
@@ -557,7 +726,12 @@ export function AdminPage({ isEditPage, editImageId }: AdminPageProps) {
             <div className="flex items-center justify-between mb-6">
               <div>
                 <h1 className="font-display text-2xl lg:text-3xl text-white">
-                  {getCategoryName(categories.find(c => c.slug === activeCat) ?? categories[0] ?? { slug: '', name_uz: '', name_ru: '' }, lang)}
+                  {activeCat === MATERIALS_SIDEBAR_SLUG
+                    ? t.admin.dashboard.materialsSection
+                    : (() => {
+                        const c = categories.find((x) => x.slug === activeCat) ?? categories[0];
+                        return c ? getCategoryName(c, lang) : '';
+                      })()}
                 </h1>
                 <p className="text-white/35 text-sm mt-0.5">
                   {loadingPortfolio ? '...' : `${catImages.length} ${t.admin.dashboard.productCountSuffix}`}
@@ -624,7 +798,11 @@ export function AdminPage({ isEditPage, editImageId }: AdminPageProps) {
               {!loadingPortfolio && catImages.length === 0 && (
                 <div className="col-span-full rounded-2xl border border-dashed border-white/10 bg-white/[0.02] p-16 flex flex-col items-center text-center gap-4">
                   <div className="w-14 h-14 rounded-2xl bg-white/5 flex items-center justify-center text-white/20">
-                    {CAT_ICONS[selectedCategory]}
+                    {activeCat === MATERIALS_SIDEBAR_SLUG ? (
+                      <Layers size={28} strokeWidth={1.4} className="text-white/25" />
+                    ) : (
+                      CAT_ICONS[selectedCategory] ?? DEFAULT_ICON
+                    )}
                   </div>
                   <div>
                     <p className="text-white/50 font-medium">{t.admin.dashboard.emptyTitle}</p>
@@ -667,8 +845,20 @@ export function AdminPage({ isEditPage, editImageId }: AdminPageProps) {
             {/* Modal header */}
             <div className="flex items-center justify-between px-6 py-5 border-b border-white/[0.07]">
               <div>
-                <h2 className="font-display text-xl text-white">{t.admin.form.createTitle}</h2>
-                <p className="text-white/35 text-xs mt-0.5">{getCategoryName(categories.find(c => c.slug === activeCat) ?? categories[0] ?? { slug:'',name_uz:'',name_ru:'' }, lang)}</p>
+                <h2 className="font-display text-xl text-white">
+                  {createAsMaterial ? t.admin.form.createMaterialTitle : t.admin.form.createCatalogTitle}
+                </h2>
+                <p className="text-white/35 text-xs mt-0.5">
+                  {createAsMaterial
+                    ? t.admin.form.kindMaterial
+                    : (() => {
+                        const c =
+                          selectedCategory && selectedCategory !== MATERIALS_SIDEBAR_SLUG
+                            ? categories.find((x) => x.slug === selectedCategory)
+                            : categories[0];
+                        return c ? getCategoryName(c, lang) : '';
+                      })()}
+                </p>
               </div>
               <button type="button" onClick={() => setShowCreatePanel(false)}
                 className="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 text-white/50 hover:text-white flex items-center justify-center transition-all">
@@ -679,6 +869,38 @@ export function AdminPage({ isEditPage, editImageId }: AdminPageProps) {
             <div className="p-6 grid grid-cols-1 lg:grid-cols-2 gap-5">
               {/* Left */}
               <div className="space-y-4">
+                <div>
+                  <p className="text-white/55 text-xs font-medium uppercase tracking-wider mb-2">{t.admin.form.kindLabel}</p>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setCreateAsMaterial(false);
+                        if (selectedCategory === MATERIALS_SIDEBAR_SLUG) {
+                          setSelectedCategory(categories[0]?.slug ?? '');
+                        }
+                      }}
+                      className={`flex-1 rounded-xl border px-3 py-2.5 text-xs font-medium transition-all ${
+                        !createAsMaterial
+                          ? 'border-gold/50 bg-gold/15 text-gold'
+                          : 'border-white/10 bg-white/5 text-white/45 hover:border-white/20 hover:text-white/80'
+                      }`}
+                    >
+                      {t.admin.form.kindCatalog}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setCreateAsMaterial(true)}
+                      className={`flex-1 rounded-xl border px-3 py-2.5 text-xs font-medium transition-all ${
+                        createAsMaterial
+                          ? 'border-gold/50 bg-gold/15 text-gold'
+                          : 'border-white/10 bg-white/5 text-white/45 hover:border-white/20 hover:text-white/80'
+                      }`}
+                    >
+                      {t.admin.form.kindMaterial}
+                    </button>
+                  </div>
+                </div>
                 <div>
                   <p className="text-white/55 text-xs font-medium uppercase tracking-wider mb-2">
                     {t.admin.form.nameLabel}
@@ -715,23 +937,25 @@ export function AdminPage({ isEditPage, editImageId }: AdminPageProps) {
                     <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gold text-xs font-semibold">UZS</span>
                   </div>
                 </div>
-                <div>
-                  <p className="text-white/55 text-xs font-medium uppercase tracking-wider mb-2">{t.admin.form.categoryLabel}</p>
-                  <div className="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto pr-1"
-                    style={{ scrollbarWidth: 'thin', scrollbarColor: 'rgba(201,169,110,0.2) transparent' }}>
-                    {categories.map((cat) => (
-                      <button key={cat.slug} type="button" onClick={() => setSelectedCategory(cat.slug)}
-                        className={`flex items-center gap-2 px-3 py-2 rounded-xl text-xs transition-all ${
-                          activeCat === cat.slug
-                            ? 'bg-gold/15 border border-gold/50 text-gold'
-                            : 'bg-white/5 border border-white/10 text-white/50 hover:text-white hover:border-white/20'
-                        }`}>
-                        <span className="shrink-0">{CAT_ICONS[cat.slug] ?? DEFAULT_ICON}</span>
-                        {getCategoryName(cat, lang)}
-                      </button>
-                    ))}
+                {!createAsMaterial && (
+                  <div>
+                    <p className="text-white/55 text-xs font-medium uppercase tracking-wider mb-2">{t.admin.form.categoryLabel}</p>
+                    <div className="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto pr-1"
+                      style={{ scrollbarWidth: 'thin', scrollbarColor: 'rgba(201,169,110,0.2) transparent' }}>
+                      {categories.map((cat) => (
+                        <button key={cat.slug} type="button" onClick={() => setSelectedCategory(cat.slug)}
+                          className={`flex items-center gap-2 px-3 py-2 rounded-xl text-xs transition-all ${
+                            selectedCategory === cat.slug
+                              ? 'bg-gold/15 border border-gold/50 text-gold'
+                              : 'bg-white/5 border border-white/10 text-white/50 hover:text-white hover:border-white/20'
+                          }`}>
+                          <span className="shrink-0">{CAT_ICONS[cat.slug] ?? DEFAULT_ICON}</span>
+                          {getCategoryName(cat, lang)}
+                        </button>
+                      ))}
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
 
               {/* Right — image upload */}
