@@ -51,14 +51,27 @@ export async function handleTelegramConsultation(
   ];
   const text = lines.join('\n');
 
-  const tgResponse = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      chat_id: chatId,
-      text,
-    }),
-  });
+  let tgResponse: Response;
+  try {
+    tgResponse = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        chat_id: chatId,
+        text,
+      }),
+    });
+  } catch (err) {
+    console.error('[send-telegram] fetch failed:', err);
+    return {
+      status: 502,
+      payload: {
+        ok: false,
+        error:
+          "Telegram serveriga ulanib bo‘lmadi. Internet yoki hosting cheklovini tekshiring; birozdan keyin qayta urinib ko‘ring.",
+      },
+    };
+  }
 
   if (!tgResponse.ok) {
     const errText = await tgResponse.text();
