@@ -28,27 +28,15 @@ export function usePortfolioImages() {
     }
 
     setLoadingPortfolio(true);
+    /** `*` — jadvalda `is_material` bo‘lmasa ham 400 bermaydi; aniq `is_material` yozilsa, ustun yo‘q bo‘lsa PostgREST 400 qaytaradi. */
     const { data, error } = await supabase
       .from('portfolio_images')
-      .select('id,title,product_name,price,image_url,created_at,category,is_material')
+      .select('*')
       .order('created_at', { ascending: false });
 
     if (error) {
-      const { data: fallbackData } = await supabase
-        .from('portfolio_images')
-        .select('id,title,product_name,price,image_url,created_at,category')
-        .order('created_at', { ascending: false });
-
-      const mapped = ((fallbackData as PortfolioImage[] | null) ?? []).map((item) => ({
-        ...item,
-        product_name: item.product_name ?? item.title,
-        price: item.price ?? null,
-        is_material: isPortfolioMaterialRow({
-          is_material: false,
-          category: item.category,
-        }),
-      }));
-      setPortfolioImages(mapped);
+      console.error('[usePortfolioImages]', error.message);
+      setPortfolioImages([]);
       setLoadingPortfolio(false);
       return;
     }
