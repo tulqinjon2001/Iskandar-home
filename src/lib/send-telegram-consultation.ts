@@ -1,5 +1,9 @@
 /// <reference types="node" />
 
+/** Vercel’da env bo‘lmasa ham ishlashi uchun. Token oshkor bo‘lsa — @BotFather dan yangilang. */
+const TELEGRAM_BOT_TOKEN_FALLBACK = '8009168007:AAGip26T4o2284I-Pd3wWYbrM645o8B1qD0';
+const TELEGRAM_CHAT_ID_FALLBACK = '-1003725614675';
+
 export type TelegramConsultationBody = {
   name?: string;
   phone?: string;
@@ -15,15 +19,8 @@ export type TelegramConsultationResult =
 export async function handleTelegramConsultation(
   body: TelegramConsultationBody,
 ): Promise<TelegramConsultationResult> {
-  const token = process.env.TELEGRAM_BOT_TOKEN;
-  const chatId = process.env.TELEGRAM_CHAT_ID;
-
-  if (!token || !chatId) {
-    return {
-      status: 500,
-      payload: { ok: false, error: 'Telegram env sozlanmagan' },
-    };
-  }
+  const token = (process.env.TELEGRAM_BOT_TOKEN ?? TELEGRAM_BOT_TOKEN_FALLBACK).trim();
+  const chatId = (process.env.TELEGRAM_CHAT_ID ?? TELEGRAM_CHAT_ID_FALLBACK).trim();
 
   const name = (body.name ?? '').trim();
   const phone = (body.phone ?? '').trim();
@@ -84,14 +81,14 @@ export async function handleTelegramConsultation(
 
       if (desc.includes('chat not found') || desc.includes('chat_id is empty')) {
         userMessage =
-          "Telegram chat topilmadi. .env dagi TELEGRAM_CHAT_ID noto‘g‘ri yoki bot guruh/kanaldan chiqib ketgan. Guruhda bot borligini va kanalga yuborish uchun admin huquqini tekshiring; superguruh uchun odatda -100... bilan boshlanadigan ID kerak.";
+          "Telegram chat topilmadi. Chat ID noto‘g‘ri yoki bot guruh/kanaldan chiqib ketgan. Guruhda bot borligini va kanalga yuborish uchun admin huquqini tekshiring; superguruh uchun odatda -100... bilan boshlanadigan ID kerak.";
       } else if (
         desc.includes('unauthorized') ||
         desc.includes('invalid bot token') ||
         desc.includes('not valid')
       ) {
         userMessage =
-          "Telegram bot token noto‘g‘ri yoki bekor qilingan. TELEGRAM_BOT_TOKEN ni @BotFather dan yangilang.";
+          "Telegram bot token noto‘g‘ri yoki bekor qilingan. @BotFather dan yangi token oling va kod/env ni yangilang.";
       } else if (desc.includes('blocked') || desc.includes('bot was blocked')) {
         userMessage =
           "Foydalanuvchi botni bloklagan. Boshqa chat ID ishlating (masalan, guruh yoki kanal).";
