@@ -93,7 +93,7 @@ export function ContactSection() {
                     +998 (97) 680-94-49
                   </p>
                   <p className="text-white font-medium leading-tight mt-1">
-                    +998 (90) 979-09-52
+                    +998 (97) 345-37-73
                   </p>
                 </div>
               </div>
