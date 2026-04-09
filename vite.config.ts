@@ -3,7 +3,7 @@ import path from "path"
 import react from "@vitejs/plugin-react"
 import { defineConfig, loadEnv, type ViteDevServer } from "vite"
 import { inspectAttr } from 'kimi-plugin-inspect-react'
-import { handleTelegramConsultation } from './src/lib/send-telegram-consultation'
+import { handleTelegramConsultation } from './api/send-telegram-consultation'
 
 function readRequestBody(req: IncomingMessage): Promise<string> {
   return new Promise((resolve, reject) => {

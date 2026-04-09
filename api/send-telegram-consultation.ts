@@ -1,6 +1,6 @@
 /// <reference types="node" />
 
-/** Vercel’da env bo‘lmasa ham ishlashi uchun. Token oshkor bo‘lsa — @BotFather dan yangilang. */
+/** Vercel’da env bo‘lmasa yoki bo‘sh qator bo‘lsa ham ishlashi uchun. */
 const TELEGRAM_BOT_TOKEN_FALLBACK = '8009168007:AAGip26T4o2284I-Pd3wWYbrM645o8B1qD0';
 const TELEGRAM_CHAT_ID_FALLBACK = '-1003725614675';
 
@@ -16,11 +16,28 @@ export type TelegramConsultationResult =
   | { status: 200; payload: { ok: true } }
   | { status: number; payload: { ok: false; error: string } };
 
+function resolveToken(): string {
+  const fromEnv = process.env.TELEGRAM_BOT_TOKEN?.trim();
+  return fromEnv || TELEGRAM_BOT_TOKEN_FALLBACK;
+}
+
+function resolveChatId(): string {
+  const fromEnv = process.env.TELEGRAM_CHAT_ID?.trim();
+  return fromEnv || TELEGRAM_CHAT_ID_FALLBACK;
+}
+
 export async function handleTelegramConsultation(
   body: TelegramConsultationBody,
 ): Promise<TelegramConsultationResult> {
-  const token = (process.env.TELEGRAM_BOT_TOKEN ?? TELEGRAM_BOT_TOKEN_FALLBACK).trim();
-  const chatId = (process.env.TELEGRAM_CHAT_ID ?? TELEGRAM_CHAT_ID_FALLBACK).trim();
+  const token = resolveToken();
+  const chatId = resolveChatId();
+
+  if (!token || !chatId) {
+    return {
+      status: 500,
+      payload: { ok: false, error: 'Telegram token yoki chat ID yo‘q.' },
+    };
+  }
 
   const name = (body.name ?? '').trim();
   const phone = (body.phone ?? '').trim();
@@ -36,7 +53,7 @@ export async function handleTelegramConsultation(
   }
 
   const lines = [
-    product ? '🛒 Yangi buyurtma (zayavka)' : 'Yangi konsultatsiya so\'rovi',
+    product ? '🛒 Yangi buyurtma (zayavka)' : "Yangi konsultatsiya so'rovi",
     '',
     ...(product ? [`Mahsulot: ${product}`] : []),
     ...(price ? [`Narx: ${price}`] : []),

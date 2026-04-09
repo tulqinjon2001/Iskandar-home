@@ -93,6 +93,8 @@ export type Translations = {
     copyright: string;
     instagram: string;
     telegram: string;
+    creditBefore: string;
+    creditAfter: string;
   };
   servicePage: {
     notFound: string;
@@ -305,6 +307,8 @@ const uz: Translations = {
     copyright: '© 2026 Iskandar Home. Barcha huquqlar himoyalangan.',
     instagram: 'Instagram: @Iskandar_home',
     telegram: 'Telegram: +998976809449',
+    creditBefore: '',
+    creditAfter: ' tomonidan tayorlandi',
   },
   servicePage: {
     notFound: 'Kategoriya topilmadi',
@@ -518,6 +522,8 @@ const ru: Translations = {
     copyright: '© 2026 Iskandar Home. Все права защищены.',
     instagram: 'Instagram: @Iskandar_home',
     telegram: 'Telegram: +998976809449',
+    creditBefore: 'Сайт подготовлен ',
+    creditAfter: '',
   },
   servicePage: {
     notFound: 'Категория не найдена',
