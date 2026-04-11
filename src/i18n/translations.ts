@@ -92,7 +92,6 @@ export type Translations = {
   footer: {
     copyright: string;
     instagram: string;
-    telegram: string;
     creditBefore: string;
     creditAfter: string;
   };
@@ -240,7 +239,7 @@ const uz: Translations = {
     },
   },
   hero: {
-    title: "Sifatli mebel va yog'och ishlar",
+    title: "SIFATLI MEBEL VA YO'G'OCH ISHLAR",
     subtitle: 'Maxsus buyurtma asosida eshiklar, zinapoyalar va sifatli mebellar ishlab chiqaramiz.',
     cta: 'Bepul konsultatsiya olish',
     learnMore: 'Xizmatlar bilan tanishish',
@@ -306,7 +305,6 @@ const uz: Translations = {
   footer: {
     copyright: '© 2026 Iskandar Home. Barcha huquqlar himoyalangan.',
     instagram: 'Instagram: @Iskandar_home',
-    telegram: 'Telegram: +998976809449',
     creditBefore: '',
     creditAfter: ' tomonidan tayorlandi',
   },
@@ -455,7 +453,7 @@ const ru: Translations = {
     },
   },
   hero: {
-    title: 'Качественная мебель и изделия из дерева',
+    title: 'КАЧЕСТВЕННАЯ МЕБЕЛЬ И ИЗДЕЛИЯ ИЗ ДЕРЕВА',
     subtitle: 'Производим двери, лестницы и качественную мебель по индивидуальному заказу.',
     cta: 'Получить консультацию',
     learnMore: 'Ознакомиться с услугами',
@@ -521,7 +519,6 @@ const ru: Translations = {
   footer: {
     copyright: '© 2026 Iskandar Home. Все права защищены.',
     instagram: 'Instagram: @Iskandar_home',
-    telegram: 'Telegram: +998976809449',
     creditBefore: 'Сайт подготовлен ',
     creditAfter: '',
   },

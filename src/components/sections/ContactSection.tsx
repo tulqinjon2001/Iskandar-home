@@ -14,6 +14,11 @@ import {
 import { useLanguage } from "../../contexts/LanguageContext";
 import { formatPhoneInput } from "../../utils/formatters";
 
+const CONTACT_PHONE_LINES = [
+  { tel: "+998976809449", display: "+998 (97) 680-94-49" },
+  { tel: "+998973453773", display: "+998 (97) 345-37-73" },
+] as const;
+
 export function ContactSection() {
   const { t } = useLanguage();
   const [consultName, setConsultName] = useState("");
@@ -82,19 +87,26 @@ export function ContactSection() {
 
             <div className="space-y-5">
               <div className="fade-up flex items-start gap-3">
-                <div className="w-10 h-10 mt-0.5 bg-gold/10 border border-gold/20 rounded-md flex items-center justify-center shrink-0">
-                  <Phone className="text-gold" size={18} />
-                </div>
+                <a
+                  href={`tel:${CONTACT_PHONE_LINES[0].tel}`}
+                  className="w-10 h-10 mt-0.5 bg-gold/10 border border-gold/20 rounded-md flex items-center justify-center shrink-0 cursor-pointer hover:bg-gold/15 hover:border-gold/40 transition-colors"
+                  aria-label={t.contact.phone}
+                >
+                  <Phone className="text-gold pointer-events-none" size={18} />
+                </a>
                 <div>
                   <p className="text-white/50 text-sm mb-1">
                     {t.contact.phone}
                   </p>
-                  <p className="text-white font-medium leading-tight">
-                    +998 (97) 680-94-49
-                  </p>
-                  <p className="text-white font-medium leading-tight mt-1">
-                    +998 (97) 345-37-73
-                  </p>
+                  {CONTACT_PHONE_LINES.map(({ tel, display }, i) => (
+                    <a
+                      key={tel}
+                      href={`tel:${tel}`}
+                      className={`block text-white font-medium leading-tight hover:text-gold transition-colors ${i > 0 ? "mt-1" : ""}`}
+                    >
+                      {display}
+                    </a>
+                  ))}
                 </div>
               </div>
 
